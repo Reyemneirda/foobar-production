@@ -1,82 +1,245 @@
 <template>
   <div id="app">
-    <nav class="navbar navbar-dark bg-dark">
-      <a class="navbar-brand" href="#"> </a>
-      <button class="btn btn-success" v-on:click="gameStart">Start</button>
-    </nav>
-    <div style="font-size: 42px;" title="foobar">💶:{{ money }}</div>
-
-    <div style="font-size: 42px;" title="foobar">🤖:{{ foobar }}</div>
-
-    <div style="font-size: 42px;" title="idle">💤:{{ foobarIddle }}</div>
-    <div style="font-size: 42px;" title="Foo">💎:{{ foo }}</div>
-    <div style="font-size: 42px;" title="Bar">🛢️:{{ bar }}</div>
-
-    <button class="btn btn-primary" v-on:click="mineFoo" title="Mine foo">
-      ⛏️ 💎
-    </button>
-    <button class="btn btn-primary mx-4" v-on:click="mineBar" title="Mine Bar">
-      ⛏️ 🛢️
-    </button>
-    <button class="btn btn-primary mx-4" v-on:click="build" title="Build Robot">
-      🧱 🤖
-    </button>
-    <button class="btn btn-primary mx-4" v-on:click="sell" title="Sell Robot">
-      Sell 🤖
-    </button>
-    <button class="btn btn-primary mx-4" v-on:click="sell" title="Buy Robot">
-      Buy 🤖
-    </button>
+    <template v-if="!gameStarted">
+      <div class="container-fluid text-center mt-5">
+        <h1>Foobar Production !</h1>
+        <p>Get 20 🖥️ and it's won !</p>
+        <button class="btn btn-success m-auto p-auto" v-on:click="gameStart">
+          Start
+        </button>
+      </div>
+    </template>
+    <template v-if="gameStarted && !gameWon">
+      <nav class="navbar navbar-dark bg-dark">
+        <Ressource icon="💶" title="Euros" v-bind:amount="money" />
+        <Ressource icon="🤖" title="Robot" v-bind:amount="robot" />
+        <Ressource icon="💎" title="Foo" v-bind:amount="foo" />
+        <Ressource icon="🛢️" title="Bar" v-bind:amount="bar" />
+        <Ressource icon="🖥️" title="Foobar" v-bind:amount="foobar" />
+      </nav>
+      <div class="container-fluid p-4">
+        <div class="row">
+          <h4>{{ message }}</h4>
+        </div>
+        <div class="row">
+          <Activity
+            icon="💤"
+            :activity="robotIddle"
+            :robotIddle="robotIddle"
+            :isIddle="true"
+          />
+          <Activity
+            icon="⛏️ 💎"
+            :activity="miningFooRobot"
+            :robotIddle="robotIddle"
+            :isIddle="false"
+            :progressStart=0
+            :contentProgress= 100
+            @addRobot="addMineFoo"
+            @removeRobot="--miningFooRobot"
+          />
+          <Activity
+            icon="⛏️ 🛢️"
+            :activity="miningBarRobot"
+            :robotIddle="robotIddle"
+            :isIddle="false"
+            @addRobot="addMineBar"
+            @removeRobot="--miningBarRobot"
+          />
+          <Activity
+            icon="🧱 🖥️"
+            :activity="buildingRobot"
+            :robotIddle="robotIddle"
+            :isIddle="false"
+            @addRobot="addBuilding"
+            @removeRobot="--buildingRobot"
+          />
+        </div>
+        <div class="row py-5">
+          <div class="col">
+            <button
+              class="btn btn-primary btn-block mx-auto"
+              v-on:click="sell"
+              title="Sell Robot"
+            >
+              Sell 🖥️
+            </button>
+          </div>
+          <div class="col">
+            <button
+              class="btn btn-primary btn-block mx-auto"
+              v-on:click="buy"
+              title="Buy Robot"
+            >
+              Buy 🤖
+            </button>
+          </div>
+        </div>
+      </div>
+    </template>
+    <template v-if="gameWon">
+      <h1>You've won !</h1>
+    </template>
   </div>
 </template>
 
 <script>
+import Ressource from "./components/RessourceComponent";
+import Activity from "./components/ActivityComponent";
+
 export default {
   data() {
     return {
+      gameStarted: false,
       money: 0,
-      foobar: 2,
-      foobarIddle: 2,
+      foobar: 0,
+      robot: 2,
+      robotIddle: 2,
       foo: 0,
-      bar: 0
+      bar: 0,
+      message: null,
+      buildingRobot: 0,
+      miningFooRobot: 0,
+      miningBarRobot: 0,
+      inQueue: 0,
+      gameWon: false
     };
   },
+  components: {
+    Ressource,
+    Activity,
+  },
+  created() {
+    this.gameStarted = false;
+  },
+  mounted() {
+    setInterval(this.gameLoop, 1000);
+  },
   methods: {
-    gameStart: function(){
-      this.money= 0
-      this.foobar= 2
-      this.foobarIddle=2
-      this.foo= 0
-      this.bar= 0
+    gameStart() {
+      this.gameStarted = true;
+      this.gameWon = false;
+      this.money = 0;
+      this.foobar = 0;
+      this.robot = 2;
+      this.robotIddle = 2;
+      this.foo = 0;
+      this.bar = 0;
+      this.message = null;
+      this.buildingRobot = 0;
+      this.miningFooRobot = 0;
+      this.miningBarRobot = 0;
     },
-    mineFoo: function() {
-      if (this.foobarIddle > 0) {
-        this.foo += 1;
-        this.foobarIddle -= 1;
+    gameLoop() {
+      if (this.robot == 20) {
+        this.message = "You've won !";
+        this.gameWon = true;
+        return false;
+      }
+      this.robotIddle =
+        this.robot -
+        (this.buildingRobot + this.miningFooRobot + this.miningBarRobot);
+      this.mineFoo();
+      this.mineBar();
+      this.build();
+    },
+    randomIntFromInterval(min, max) {
+      return Math.floor(Math.random() * (max - min + 1) + min);
+    },
+    removeFromActivity(activity) {
+      activity -= 1;
+      console.log(activity);
+      console.log(this.robotIddle);
+    },
+    addMineFoo() {
+      this.miningFooRobot += 1;
+    },
+    mineFoo() {
+      var children = this.$root.$children[0].$children[1].$children.filter(
+        x => x.$el.className == "col-12 task-waiting"
+      );
+      var mindeIddle = children.length;
+      var activeMiner = this.miningFooRobot - mindeIddle
+      if (activeMiner < 1) {
+        return false;
+      }
+      setTimeout(() => {
+        this.foo += 1 * (activeMiner);
+      }, 1000);
+    },
+    addMineBar() {
+      this.miningBarRobot += 1;
+    },
+    mineBar() {
+      var children = this.$root.$children[0].$children[2].$children.filter(
+        x => x.$el.className == "col-12 task-waiting"
+      );
+      var mindeIddle = children.length;
+      var activeMiner = this.miningBarRobot - mindeIddle
+      if (activeMiner < 1) {
+        return false;
+      }
+      var timeForActivity = this.randomIntFromInterval(500, 2000);
+      setTimeout(() => {
+        this.bar += 1 * activeMiner;
+      }, timeForActivity);
+    },
+    addBuilding() {
+      this.buildingRobot += 1;
+    },
+    build() {
+      var children = this.$root.$children[0].$children[3].$children.filter(
+        x => x.$el.className == "col-12 task-waiting"
+      );
+      var mindeIddle = children.length;
+      var activeBuilders = this.buildingRobot - mindeIddle;
+      if (activeBuilders > 0 && this.foo > 1 && this.bar > 1) {
+        var chance = Math.random();
+        var success = chance > 0.4 ? true : false;
+        setTimeout(() => {
+          if (success) {
+            this.foo -= 1 * activeBuilders;
+            this.bar -= 1 * activeBuilders;
+            this.foobar += 1 * activeBuilders;
+          } else {
+            this.foo -= 1 * activeBuilders;
+          }
+        }, 2000);
+      }
+      if (this.foo < 0) {
+        this.foo = 0;
+      }
+      if (this.bar < 0) {
+        this.bar = 0;
       }
     },
-    mineBar: function() {
-      if (this.foobarIddle > 0) {
-        this.bar += 1;
-        this.foobarIddle -= 1;
+    sell() {
+      var amount = 0;
+      if (0 < this.foobar <= 5) {
+        amount = this.randomIntFromInterval(1, this.foobar);
+      } else {
+        amount = this.randomIntFromInterval(1, 5);
+      }
+      setTimeout(() => {
+        this.foobar -= amount;
+        this.money += 1 * amount;
+      }, 10000);
+      if (this.foobar < 0) {
+        this.foobar = 0;
       }
     },
-    build: function() {
-      if (this.foobarIddle > 0) {
-        this.foo += 1;
-        this.foobarIddle -= 1;
+    buy() {
+      if (this.money < 3 || this.foo < 6) {
+        return false;
       }
-    },
-    sell: function() {
-      if (this.foobarIddle > 0) {
-        this.foo += 1;
-        this.foobarIddle -= 1;
+      this.money -= 3;
+      this.foo -= 6;
+      this.robot += 1;
+      if (this.foo < 0) {
+        this.foo = 0;
       }
-    },
-    buy: function() {
-      if (this.foobarIddle > 0) {
-        this.bar += 1;
-        this.foobarIddle -= 1;
+      if (this.money < 0) {
+        this.money = 0;
       }
     }
   }
