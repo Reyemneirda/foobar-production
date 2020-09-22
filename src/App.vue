@@ -33,8 +33,8 @@
             :activity="miningFooRobot"
             :robotIddle="robotIddle"
             :isIddle="false"
-            :progressStart=0
-            :contentProgress= 100
+            :progressStart="0"
+            :contentProgress="100"
             @addRobot="addMineFoo"
             @removeRobot="--miningFooRobot"
           />
@@ -58,11 +58,17 @@
         <div class="row py-5">
           <div class="col">
             <button
-              class="btn btn-primary btn-block mx-auto"
+              class="btn btn-light btn-block mx-auto"
               v-on:click="sell"
               title="Sell Robot"
+              id="sell"
+              ref="sell"
             >
-              Sell 🖥️
+              <button class="btn" @click="setSellQuantity('reduce')">-</button>
+              Sell {{ sellQuantity }} 🖥️
+              <button class="btn" @click="setSellQuantity('increment')">
+                +
+              </button>
             </button>
           </div>
           <div class="col">
@@ -71,7 +77,7 @@
               v-on:click="buy"
               title="Buy Robot"
             >
-              Buy 🤖
+              Buy 🤖 (cost 3 💶 and 6 💎 )
             </button>
           </div>
         </div>
@@ -102,18 +108,21 @@ export default {
       miningFooRobot: 0,
       miningBarRobot: 0,
       inQueue: 0,
-      gameWon: false
+      gameWon: false,
+      sellQuantity: 1
     };
   },
   components: {
     Ressource,
-    Activity,
+    Activity
   },
   created() {
     this.gameStarted = false;
   },
   mounted() {
-    setInterval(this.gameLoop, 1000);
+    if (this.gameStarted == true ){
+      setInterval(this.gameLoop, 1000);
+    }
   },
   methods: {
     gameStart() {
@@ -159,12 +168,12 @@ export default {
         x => x.$el.className == "col-12 task-waiting"
       );
       var mindeIddle = children.length;
-      var activeMiner = this.miningFooRobot - mindeIddle
+      var activeMiner = this.miningFooRobot - mindeIddle;
       if (activeMiner < 1) {
         return false;
       }
       setTimeout(() => {
-        this.foo += 1 * (activeMiner);
+        this.foo += 1 * activeMiner;
       }, 1000);
     },
     addMineBar() {
@@ -175,7 +184,7 @@ export default {
         x => x.$el.className == "col-12 task-waiting"
       );
       var mindeIddle = children.length;
-      var activeMiner = this.miningBarRobot - mindeIddle
+      var activeMiner = this.miningBarRobot - mindeIddle;
       if (activeMiner < 1) {
         return false;
       }
@@ -213,13 +222,27 @@ export default {
         this.bar = 0;
       }
     },
-    sell() {
-      var amount = 0;
-      if (0 < this.foobar <= 5) {
-        amount = this.randomIntFromInterval(1, this.foobar);
-      } else {
-        amount = this.randomIntFromInterval(1, 5);
+    setSellQuantity(action) {
+      console.log(action);
+      if (action == "increment") {
+        if (this.sellQuantity >= 5) {
+          this.sellQuantity == 5;
+        } else {
+          this.sellQuantity++;
+        }
       }
+
+      if (action == "reduce") {
+        if (this.sellQuantity <= 1) {
+          this.sellQuantity == 1;
+        } else {
+          this.sellQuantity--;
+        }
+      }
+    },
+    sell() {
+      console.log(this.$refs)
+      var amount = this.sellQuantity;
       setTimeout(() => {
         this.foobar -= amount;
         this.money += 1 * amount;
