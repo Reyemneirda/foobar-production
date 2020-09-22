@@ -18,8 +18,8 @@ npm run serve
 ```
 npm run build
 ```
-### Stuff that could be implemented with more time
--Use of Vuex Store
--A bar filling to show how long each production takes
--More animation
--Sounds
+### Features that could be implemented with more time
+ - Use of Vuex Store
+ - bars filling to show how long each production takes
+ - More animation
+ - Sounds
