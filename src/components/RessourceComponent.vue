@@ -6,6 +6,9 @@
     style="font-size: 42px;"
     title="title"
     >{{ icon }}:{{ amount }}
+    <span v-if="amountPerTick && amountPerTick!= '0'" :style="colorAmount"
+      >({{ amountPerTick }})</span
+    >
   </a>
 </template>
 <script>
@@ -19,6 +22,12 @@ export default {
     amount: {
       type: Number,
       required: true
+    },
+    colorAmount: {
+      type: String
+    },
+    amountPerTick: {
+      type: String
     }
   }
 };

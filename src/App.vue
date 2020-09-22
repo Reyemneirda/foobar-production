@@ -13,9 +13,27 @@
       <nav class="navbar navbar-dark bg-dark">
         <Ressource icon="💶" title="Euros" v-bind:amount="money" />
         <Ressource icon="🤖" title="Robot" v-bind:amount="robot" />
-        <Ressource icon="💎" title="Foo" v-bind:amount="foo" />
-        <Ressource icon="🛢️" title="Bar" v-bind:amount="bar" />
-        <Ressource icon="🖥️" title="Foobar" v-bind:amount="foobar" />
+        <Ressource
+          icon="💎"
+          title="Foo"
+          v-bind:amount="foo"
+          :colorAmount="fooAmountColor"
+          :amountPerTick="fooAmountPerTick"
+        />
+        <Ressource
+          icon="🛢️"
+          title="Bar"
+          v-bind:amount="bar"
+          :colorAmount="barAmountColor"
+          :amountPerTick="barAmountPerTick"
+        />
+        <Ressource
+          icon="🖥️"
+          title="Foobar"
+          v-bind:amount="foobar"
+          :colorAmount="foobarAmountColor"
+          :amountPerTick="foobarAmountPerTick"
+        />
       </nav>
       <div class="container-fluid p-4">
         <div class="row">
@@ -57,33 +75,39 @@
         </div>
         <div class="row py-5">
           <div class="col">
-            <button
-              class="btn btn-light btn-block mx-auto py-2"
-              v-on:click="sell"
-              title="Sell Robot"
-              id="sell"
-              ref="sell"
-            >
-              <div v-if="!selling">
-                <button class="btn btn-info" @click="setSellQuantity('reduce')">
-                  -
-                </button>
-                Sell {{ sellQuantity }} 🖥️
-                <button
-                  class="btn btn-info"
-                  @click="setSellQuantity('increment')"
-                >
-                  +
-                </button>
-              </div>
-              <div v-if="selling">
-                <ClipLoader
-                  :loading="selling"
-                  :color="'blue'"
-                  :size="'25px'"
-                ></ClipLoader>
-              </div>
-            </button>
+            <div class="btn-group special" role="group" aria-label="Basic example">
+              <button
+                v-if="!selling"
+                class="btn btn-info py-3"
+                @click="setSellQuantity('reduce')"
+              >
+                -
+              </button>
+              <button
+                class="btn btn-light btn-block mx-auto py-3 px-5"
+                v-on:click="sell"
+                style="width: 100%;"
+                title="Sell Robot"
+                id="sell"
+                ref="sell"
+              >
+                <div v-if="!selling">Sell {{ sellQuantity }} 🖥️</div>
+                <div v-if="selling">
+                  <ClipLoader
+                    :loading="selling"
+                    :color="'blue'"
+                    :size="'25px'"
+                  ></ClipLoader>
+                </div>
+              </button>
+              <button
+                v-if="!selling"
+                class="btn btn-info"
+                @click="setSellQuantity('increment')"
+              >
+                +
+              </button>
+            </div>
           </div>
           <div class="col">
             <button
@@ -125,7 +149,13 @@ export default {
       inQueue: 0,
       gameWon: false,
       sellQuantity: 1,
-      selling: false
+      selling: false,
+      fooAmountColor: "",
+      fooAmountPerTick: "0",
+      barAmountColor: "",
+      barAmountPerTick: "0",
+      foobarAmountColor: "",
+      foobarAmountPerTick: "0"
     };
   },
   components: {
@@ -137,9 +167,7 @@ export default {
     this.gameStarted = false;
   },
   mounted() {
-    if (this.gameStarted == true) {
-      setInterval(this.gameLoop, 1000);
-    }
+    setInterval(this.gameLoop, 1000);
   },
   methods: {
     gameStart() {
@@ -157,6 +185,9 @@ export default {
       this.miningBarRobot = 0;
     },
     gameLoop() {
+      if (this.gameStarted == false) {
+        return false;
+      }
       if (this.robot == 20) {
         this.message = "You've won !";
         this.gameWon = true;
@@ -168,6 +199,58 @@ export default {
       this.mineFoo();
       this.mineBar();
       this.build();
+      this.setAmounts();
+    },
+    setAmounts() {
+      var fooChildren = this.$root.$children[0].$children[1].$children.filter(
+        x => x.$el.className == "col-12 task-waiting"
+      );
+      var fooMineIddle = fooChildren.length;
+      var fooActiveMiner = this.miningFooRobot - fooMineIddle;
+
+      var barChildren = this.$root.$children[0].$children[2].$children.filter(
+        x => x.$el.className == "col-12 task-waiting"
+      );
+      var barMineIddle = barChildren.length;
+      var barActiveMiner = this.miningBarRobot - barMineIddle;
+
+      var foorbarChildren = this.$root.$children[0].$children[3].$children.filter(
+        x => x.$el.className == "col-12 task-waiting"
+      );
+      var foobarMineIddle = foorbarChildren.length;
+      var activeBuilders = this.buildingRobot - foobarMineIddle;
+
+      this.fooAmountPerTick = fooActiveMiner - activeBuilders;
+      this.barAmountPerTick = barActiveMiner - activeBuilders;
+      this.foobarAmountPerTick = activeBuilders;
+
+      if (this.fooAmountPerTick > 0) {
+        this.fooAmountPerTick = "+" + this.fooAmountPerTick.toString();
+        this.fooAmountColor = "color:green;";
+      } else if (this.fooAmountPerTick < 0) {
+        this.fooAmountPerTick = this.fooAmountPerTick.toString();
+        this.fooAmountColor = "color:red;";
+      } else {
+        this.fooAmountPerTick = "0";
+      }
+      if (this.barAmountPerTick > 0) {
+        this.barAmountPerTick = "+" + this.barAmountPerTick.toString();
+        this.barAmountColor = "color:green;";
+      } else if (this.barAmountPerTick < 0) {
+        this.barAmountPerTick = this.barAmountPerTick.toString();
+        this.barAmountColor = "color:red;";
+      } else {
+        this.barAmountPerTick = "0";
+      }
+      if (this.foobarAmountPerTick > 0) {
+        this.foobarAmountPerTick = "+" + this.foobarAmountPerTick.toString();
+        this.foobarAmountColor = "color:green;";
+      } else if (this.foobarAmountPerTick < 0) {
+        this.foobarAmountPerTick = this.foobarAmountPerTick.toString();
+        this.foobarAmountColor = "color:red;";
+      } else {
+        this.foobarAmountPerTick = "0";
+      }
     },
     randomIntFromInterval(min, max) {
       return Math.floor(Math.random() * (max - min + 1) + min);
@@ -184,11 +267,12 @@ export default {
       var children = this.$root.$children[0].$children[1].$children.filter(
         x => x.$el.className == "col-12 task-waiting"
       );
-      var mindeIddle = children.length;
-      var activeMiner = this.miningFooRobot - mindeIddle;
+      var mineIddle = children.length;
+      var activeMiner = this.miningFooRobot - mineIddle;
       if (activeMiner < 1) {
         return false;
       }
+
       setTimeout(() => {
         this.foo += 1 * activeMiner;
       }, 1000);
@@ -200,8 +284,8 @@ export default {
       var children = this.$root.$children[0].$children[2].$children.filter(
         x => x.$el.className == "col-12 task-waiting"
       );
-      var mindeIddle = children.length;
-      var activeMiner = this.miningBarRobot - mindeIddle;
+      var mineIddle = children.length;
+      var activeMiner = this.miningBarRobot - mineIddle;
       if (activeMiner < 1) {
         return false;
       }
@@ -217,8 +301,8 @@ export default {
       var children = this.$root.$children[0].$children[3].$children.filter(
         x => x.$el.className == "col-12 task-waiting"
       );
-      var mindeIddle = children.length;
-      var activeBuilders = this.buildingRobot - mindeIddle;
+      var mineIddle = children.length;
+      var activeBuilders = this.buildingRobot - mineIddle;
       if (activeBuilders > 0 && this.foo > 1 && this.bar > 1) {
         var chance = Math.random();
         var success = chance > 0.4 ? true : false;
