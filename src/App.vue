@@ -3,7 +3,7 @@
     <template v-if="!gameStarted">
       <div class="container-fluid text-center mt-5">
         <h1>Foobar Production !</h1>
-        <p>Get 20 🖥️ and it's won !</p>
+        <p>Get 20 🤖 and it's won !</p>
         <button class="btn btn-success m-auto p-auto" v-on:click="gameStart">
           Start
         </button>
@@ -58,22 +58,36 @@
         <div class="row py-5">
           <div class="col">
             <button
-              class="btn btn-light btn-block mx-auto"
+              class="btn btn-light btn-block mx-auto py-2"
               v-on:click="sell"
               title="Sell Robot"
               id="sell"
               ref="sell"
             >
-              <button class="btn" @click="setSellQuantity('reduce')">-</button>
-              Sell {{ sellQuantity }} 🖥️
-              <button class="btn" @click="setSellQuantity('increment')">
-                +
-              </button>
+              <div v-if="!selling">
+                <button class="btn btn-info" @click="setSellQuantity('reduce')">
+                  -
+                </button>
+                Sell {{ sellQuantity }} 🖥️
+                <button
+                  class="btn btn-info"
+                  @click="setSellQuantity('increment')"
+                >
+                  +
+                </button>
+              </div>
+              <div v-if="selling">
+                <ClipLoader
+                  :loading="selling"
+                  :color="'blue'"
+                  :size="'25px'"
+                ></ClipLoader>
+              </div>
             </button>
           </div>
           <div class="col">
             <button
-              class="btn btn-primary btn-block mx-auto"
+              class="btn btn-primary btn-block mx-auto py-3"
               v-on:click="buy"
               title="Buy Robot"
             >
@@ -92,6 +106,7 @@
 <script>
 import Ressource from "./components/RessourceComponent";
 import Activity from "./components/ActivityComponent";
+import ClipLoader from "vue-spinner/src/ClipLoader.vue";
 
 export default {
   data() {
@@ -109,18 +124,20 @@ export default {
       miningBarRobot: 0,
       inQueue: 0,
       gameWon: false,
-      sellQuantity: 1
+      sellQuantity: 1,
+      selling: false
     };
   },
   components: {
     Ressource,
-    Activity
+    Activity,
+    ClipLoader
   },
   created() {
     this.gameStarted = false;
   },
   mounted() {
-    if (this.gameStarted == true ){
+    if (this.gameStarted == true) {
       setInterval(this.gameLoop, 1000);
     }
   },
@@ -241,13 +258,17 @@ export default {
       }
     },
     sell() {
-      console.log(this.$refs)
+      if (this.foobar <= 0) {
+        return false;
+      }
+      this.selling = true;
       var amount = this.sellQuantity;
       setTimeout(() => {
         this.foobar -= amount;
         this.money += 1 * amount;
+        this.selling = false;
       }, 10000);
-      if (this.foobar < 0) {
+      if (this.foobar <= 0) {
         this.foobar = 0;
       }
     },
