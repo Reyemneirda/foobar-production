@@ -3,7 +3,10 @@
 ## Goal
 Manage ressources by using Robot to mine what you need to create foobar
 The goal is to have 20 robots
-The rest is ingame
+The rest is in-game
+
+[Live demo](https://foobar-production-factory.herokuapp.com/)
+
 ## Project setup
 ```
 npm install
