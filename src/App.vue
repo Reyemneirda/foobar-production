@@ -75,7 +75,11 @@
         </div>
         <div class="row py-5">
           <div class="col">
-            <div class="btn-group special" role="group" aria-label="Basic example">
+            <div
+              class="btn-group special"
+              role="group"
+              aria-label="Basic example"
+            >
               <button
                 v-if="!selling"
                 class="btn btn-info py-3"
@@ -131,11 +135,11 @@
 import Ressource from "./components/RessourceComponent";
 import Activity from "./components/ActivityComponent";
 import ClipLoader from "vue-spinner/src/ClipLoader.vue";
+import { mapMutations, mapState } from "vuex";
 
 export default {
   data() {
     return {
-      gameStarted: false,
       money: 0,
       foobar: 0,
       robot: 2,
@@ -163,15 +167,17 @@ export default {
     Activity,
     ClipLoader
   },
-  created() {
-    this.gameStarted = false;
+  computed: {
+    ...mapState("gameManager", ["gameStarted", "gameWon"])
   },
   mounted() {
     setInterval(this.gameLoop, 1000);
   },
+  
   methods: {
+    ...mapMutations("gameManager", ["startGame"]),
     gameStart() {
-      this.gameStarted = true;
+      this.startGame();
       this.gameWon = false;
       this.money = 0;
       this.foobar = 0;
