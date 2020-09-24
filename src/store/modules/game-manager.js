@@ -27,7 +27,7 @@ const mutations = {
     state.gameStarted = true;
   },
   gameWon(state) {
-    state.gameWon = true
+    state.gameWon = true;
   }
 };
 

@@ -135,7 +135,7 @@
 import Ressource from "./components/RessourceComponent";
 import Activity from "./components/ActivityComponent";
 import ClipLoader from "vue-spinner/src/ClipLoader.vue";
-import { mapMutations, mapState } from "vuex";
+import { mapState, mapActions } from "vuex";
 
 export default {
   data() {
@@ -151,7 +151,6 @@ export default {
       miningFooRobot: 0,
       miningBarRobot: 0,
       inQueue: 0,
-      gameWon: false,
       sellQuantity: 1,
       selling: false,
       fooAmountColor: "",
@@ -168,17 +167,18 @@ export default {
     ClipLoader
   },
   computed: {
-    ...mapState("gameManager", ["gameStarted", "gameWon"])
+    ...mapState({ 
+      gameStarted: state => state.gameManager.gameStarted,
+      gameWon: state => state.gameManager.gameWon
+    })
   },
   mounted() {
     setInterval(this.gameLoop, 1000);
   },
-  
   methods: {
-    ...mapMutations("gameManager", ["startGame"]),
+    ...mapActions("gameManager", ["gameManager","gameStarts"]),
     gameStart() {
-      this.startGame();
-      this.gameWon = false;
+      this.gameStarts();
       this.money = 0;
       this.foobar = 0;
       this.robot = 2;
@@ -194,9 +194,8 @@ export default {
       if (this.gameStarted == false) {
         return false;
       }
-      if (this.robot == 20) {
+      if (this.gameEnds) {
         this.message = "You've won !";
-        this.gameWon = true;
         return false;
       }
       this.robotIddle =
